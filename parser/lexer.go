@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/tufanbarisyildirim/gonginx/parser/token"
+	"github.com/yongPhone/gonginx/parser/token"
 )
 
 //lexer is the main tokenizer

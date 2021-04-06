@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tufanbarisyildirim/gonginx"
-	"github.com/tufanbarisyildirim/gonginx/parser/token"
+	"github.com/yongPhone/gonginx"
+	"github.com/yongPhone/gonginx/parser/token"
 )
 
 //Parser is an nginx config parser
