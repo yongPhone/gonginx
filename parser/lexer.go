@@ -3,6 +3,7 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 
 	"github.com/tufanbarisyildirim/gonginx/parser/token"
@@ -31,25 +32,32 @@ func newLexer(r io.Reader) *lexer {
 }
 
 //Scan gives you next token
-func (s *lexer) scan() token.Token {
-	s.Latest = s.getNextToken()
-	return s.Latest
+func (s *lexer) scan() (token.Token, error) {
+	var err error
+	s.Latest, err = s.getNextToken()
+	if err != nil {
+		return token.Token{}, err
+	}
+	return s.Latest, nil
 }
 
 //All scans all token and returns them as a slice
-func (s *lexer) all() token.Tokens {
+func (s *lexer) all() (token.Tokens, error) {
 	tokens := make([]token.Token, 0)
 	for {
-		v := s.scan()
+		v, err := s.scan()
+		if err != nil {
+			return nil, err
+		}
 		if v.Type == token.EOF || v.Type == -1 {
 			break
 		}
 		tokens = append(tokens, v)
 	}
-	return tokens
+	return tokens, nil
 }
 
-func (s *lexer) getNextToken() token.Token {
+func (s *lexer) getNextToken() (token.Token, error) {
 reToken:
 	ch := s.peek()
 	switch {
@@ -57,21 +65,21 @@ reToken:
 		s.skipWhitespace()
 		goto reToken
 	case isEOF(ch):
-		return s.NewToken(token.EOF).Lit(string(s.read()))
+		return s.NewToken(token.EOF).Lit(string(s.read())), nil
 	case ch == ';':
-		return s.NewToken(token.Semicolon).Lit(string(s.read()))
+		return s.NewToken(token.Semicolon).Lit(string(s.read())), nil
 	case ch == '{':
-		return s.NewToken(token.BlockStart).Lit(string(s.read()))
+		return s.NewToken(token.BlockStart).Lit(string(s.read())), nil
 	case ch == '}':
-		return s.NewToken(token.BlockEnd).Lit(string(s.read()))
+		return s.NewToken(token.BlockEnd).Lit(string(s.read())), nil
 	case ch == '#':
-		return s.scanComment()
+		return s.scanComment(), nil
 	case ch == '$':
-		return s.scanVariable()
+		return s.scanVariable(), nil
 	case isQuote(ch):
 		return s.scanQuotedString(ch)
 	default:
-		return s.scanKeyword()
+		return s.scanKeyword(), nil
 	}
 }
 
@@ -140,7 +148,7 @@ func (s *lexer) scanComment() token.Token {
 \t – To add tab space.
 \r – For carriage return.
 */
-func (s *lexer) scanQuotedString(delimiter rune) token.Token {
+func (s *lexer) scanQuotedString(delimiter rune) (token.Token, error) {
 	var buf bytes.Buffer
 	tok := s.NewToken(token.QuotedString)
 	buf.WriteRune(s.read()) //consume delimiter
@@ -148,7 +156,7 @@ func (s *lexer) scanQuotedString(delimiter rune) token.Token {
 		ch := s.read()
 
 		if ch == rune(token.EOF) {
-			panic("unexpected end of file while scanning a string, maybe an unclosed quote?")
+			return token.Token{}, errors.New("unexpected end of file while scanning a string, maybe an unclosed quote? ")
 		}
 
 		if ch == '\\' {
@@ -174,7 +182,7 @@ func (s *lexer) scanQuotedString(delimiter rune) token.Token {
 		}
 	}
 
-	return tok.Lit(buf.String())
+	return tok.Lit(buf.String()), nil
 }
 
 func (s *lexer) scanKeyword() token.Token {

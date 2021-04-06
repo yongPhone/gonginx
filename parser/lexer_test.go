@@ -9,7 +9,7 @@ import (
 )
 
 func TestScanner_Lex(t *testing.T) {
-	actual := lex(`
+	actual, err := lex(`
 server { # simple reverse-proxy
     listen       80;
     server_name  gonginx.com www.gonginx.com;
@@ -31,6 +31,7 @@ server { # simple reverse-proxy
 include /etc/nginx/conf.d/*.conf;
 directive "with a quoted string\t \r\n \\ with some escaped thing s\" good.";
 #also cmment right before eof`).all()
+	assert.NilError(t, err)
 
 	var expect = token.Tokens{
 		{Type: token.Keyword, Literal: "server", Line: 2, Column: 1},

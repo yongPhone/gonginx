@@ -13,7 +13,8 @@ func TestParser_CurrFollow(t *testing.T) {
 	server { # simple reverse-proxy
 	}
 	`
-	p := NewStringParser(conf)
+	p, err := NewStringParser(conf)
+	assert.NilError(t, err)
 	//assert.Assert(t, tokens, 1)
 	assert.Assert(t, p.curTokenIs(token.Keyword))
 	assert.Assert(t, p.followingTokenIs(token.BlockStart))
@@ -37,11 +38,14 @@ func TestParser_UnendedInclude(t *testing.T) {
 		}
 	}()
 
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 	server { 
 	include /but/no/semicolon before block;
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func TestParser_LocationNoParam(t *testing.T) {
@@ -51,11 +55,14 @@ func TestParser_LocationNoParam(t *testing.T) {
 		}
 	}()
 
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 	server { 
 	location  {} #location with no param
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func TestParser_LocationTooManyParam(t *testing.T) {
@@ -65,15 +72,18 @@ func TestParser_LocationTooManyParam(t *testing.T) {
 		}
 	}()
 
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 	server { 
 	location one two three four {} #location with too many arguments
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func TestParser_ParseValidLocations(t *testing.T) {
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 	server { 
 		location  ~ /(.*)php/{
@@ -84,11 +94,14 @@ func TestParser_ParseValidLocations(t *testing.T) {
 
 			} #location with no param
 
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func TestParser_ParseUpstream(t *testing.T) {
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 		upstream my_upstream{
 			server 127.0.0.1:8080;
@@ -103,7 +116,10 @@ func TestParser_ParseUpstream(t *testing.T) {
 
 			} #location with no param
 
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func TestParser_ParseFromFile(t *testing.T) {
@@ -114,7 +130,7 @@ func TestParser_ParseFromFile(t *testing.T) {
 }
 
 func TestParser_MultiParamDirecive(t *testing.T) {
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 http{
 		server { 
@@ -124,28 +140,37 @@ http{
 			}
 		}
 }
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func TestParser_Location(t *testing.T) {
-	c := NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 		location ~ /and/ends{
 			
 		} 
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	c, err := pa.Parse()
+	assert.NilError(t, err)
 
 	_, ok := c.Directives[0].(*gonginx.Location)
 	assert.Assert(t, ok, "expecting a location as first statement")
 }
 
 func TestParser_VariableAsParameter(t *testing.T) {
-	c := NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 			map $host $clientname {
 				default -;
 			}
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	c, err := pa.Parse()
+	assert.NilError(t, err)
 
 	d, ok := c.Directives[0].(*gonginx.Directive)
 	assert.Assert(t, ok, "expecting a directive(http) as first statement")
@@ -162,11 +187,14 @@ func TestParser_UnendedMultiParams(t *testing.T) {
 		}
 	}()
 
-	NewParserFromLexer(
+	pa, err := NewParserFromLexer(
 		lex(`
 	server { 
 	a_driective with mutli params /but/no/semicolon/to/panic }
-	`)).Parse()
+	`))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 }
 
 func Benchmark_ParseFullExample(t *testing.B) {
@@ -212,7 +240,10 @@ server_name big.server.com;
 access_log logs/big.server.access.log main;
 location / { proxy_pass http://big_server_com; } } }`
 	for n := 0; n < t.N; n++ {
-		NewParserFromLexer(
-			lex(fullconf)).Parse()
+		pa, err := NewParserFromLexer(
+			lex(fullconf))
+	assert.NilError(t, err)
+	_, err = pa.Parse()
+	assert.NilError(t, err)
 	}
 }
