@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	p := parser.NewStringParser(`
+	p, err := parser.NewStringParser(`
 user nginx;
 worker_processes auto;
 error_log /var/log/nginx/error.log;
@@ -60,8 +60,14 @@ http {
     }
 
 }`)
+	if err != nil {
+		panic(err)
+	}
 
-	c := p.Parse()
+	c, err := p.Parse()
+	if err != nil {
+		panic(err)
+	}
 	directives := c.FindDirectives("proxy_pass")
 	for _, directive := range directives {
 		fmt.Println("found a proxy_pass :  ", directive.GetName(), directive.GetParameters())

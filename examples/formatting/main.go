@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	p := parser.NewStringParser(`user www www;
+	p, err := parser.NewStringParser(`user www www;
 worker_processes 5;
 error_log logs/error.log;
 pid logs/nginx.pid;
@@ -49,8 +49,13 @@ server 192.168.0.1:8001;
 server_name big.server.com;
 access_log logs/big.server.access.log main;
 location / { proxy_pass http://big_server_com; } } }`)
-
-	c := p.Parse()
+	if err != nil {
+		panic(err)
+	}
+	c, err := p.Parse()
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(gonginx.DumpConfig(c, gonginx.IndentedStyle))
 
 }

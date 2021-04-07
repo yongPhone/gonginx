@@ -8,14 +8,20 @@ import (
 )
 
 func main() {
-	p := parser.NewStringParser(`http{
+	p, err := parser.NewStringParser(`http{
 	upstream my_backend{
 		server 127.0.0.1:443;
 		server 127.0.0.2:443 backup;
 	}
 	}`)
+	if err != nil {
+		panic(err)
+	}
 
-	conf := p.Parse()
+	conf, err := p.Parse()
+	if err != nil {
+		panic(err)
+	}
 	upstreams := conf.FindUpstreams()
 
 	upstreams[0].AddServer(&gonginx.UpstreamServer{
